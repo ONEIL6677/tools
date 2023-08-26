@@ -1,0 +1,26 @@
+COMMAND TO CREATE MAVEN PROJECT
+
+
+mvn archetype:generate -DgroupId=com.myapp -DartifactId=MyApp -DarchetypeArtifactId=maven-archetype-quickstart -DarchetypeVersion=1.0 -DinteractiveMode=false
+
+mvn archetype:generate "create a project"
+
+cd "name of project" 'move into project folder'
+
+mvn compile "to download code from remot repo"
+
+mvn test "to download test files to test folder"
+
+mvn package "to generate a artifact"
+
+
+
+
+after creating project add this to POM file
+
+<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>8.0.33</version>
+</dependency>

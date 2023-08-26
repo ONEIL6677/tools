@@ -1,0 +1,129 @@
+# ansible role to install a meanstack app
+
+# create 3 roles
+# prerequisites
+# momgodb 
+# node js
+
+sudo ansible-galaxy init prerequisites
+sudo ansible-galaxy init mongodb
+sudo ansible-galaxy init nodejs
+
+cd prerequisites/tasks/
+nano main.yml
+
+- name: install git
+  apt:
+    name: git
+    state: present
+    update_cache: yes
+
+save and exit
+
+# go to momgodb role and configure task file
+
+cd mongodb/tasks/
+
+nano main.yml
+
+---
+- name: mongoDB - Import public key
+  apt_key:
+   keyserver: hkp://keyserver.ubuntu.com:80
+   id: EA312927
+
+- name: mongoDB - Add repository
+  apt_repository:
+   filename: '/etc/sources.list.d/mongodb-org-3.2.list'
+   repo: 'deb http://repo.mongodb-org/3.2 multiverse'
+   state: present
+   update_cache: yes
+
+- name: mongoDB - Install mongoDB
+  apt:
+   name: mongodb.org
+   state: present
+   update_cache: yes
+
+- name: start momgod
+  shell: "mongob &"
+# save n exit
+
+
+go to nodejs role and configure task file
+
+- name: Node.js - Get script
+  Get_url:
+   url: "http://deb.nodesource.com/setup_6.x"
+   dest: "{{ var_node }}/nodejs.sh"
+
+- name: Node.js - Set execution permision to script
+  file:
+   path: "{{ var_node }}/nodejs.sh"
+   mode: "u+x"
+
+- name: Node.js - Execute installation script
+  shell: "{{ var_node }}/nodejs.sh"
+
+- name: Node.js - remove installation script
+  file:
+    path: "{{ var_node }}/nodejs.sh"
+    state: absent
+
+- name: Node.js - install Node.js
+  apt: name={{ item }} state=present update_cache=yes
+  with_items:
+    - build-essential
+    - nodejs
+
+
+- name: Install NPM 
+  apt:
+    name: npm
+    state: present
+  
+- name: Node.js | Install bower globally
+  npm: name={{ item }} state=present global=yes
+  with_items:
+    - bower
+    - gulp
+
+save and exit
+
+# all roles are configure
+
+# go out of the roles directory 
+cd ../../..
+
+# create a playbook in ansible directory to run d roles
+
+nano meanstack.yml
+
+---
+- hosts: all
+  become: true
+  vars:
+    #variables needed during node instatllation
+    var_node: /tmp
+  roles:
+    - prerequisites
+    - momgodb
+    - nodejs
+
+
+save and exit
+
+# go to slave machine and run the command 
+
+sudo apt-key list | grep "expired:"
+
+sudo apt-key adv --kerserver hkp://keyserver.ubuntu.com:80 --recv-keys 0xd68fa50fea312927
+sudo su 
+cd /var/lib/dpkg/ #remove lops here
+rm lock-frontend
+rm lock
+
+
+# go to control machine and run your ansible 
+
+sudo ansible-playbook /etc/ansible/meanstack.yml -k

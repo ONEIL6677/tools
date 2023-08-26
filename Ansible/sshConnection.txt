@@ -1,0 +1,85 @@
+
+
+
+INSTALL ANSIBLE       repo: https://github.com/e2eSolutionArchitect/scripts/blob/main/ansible/ansible-install-in-ec2-RHEL.md
+
+sudo apt update
+sudo su #change to super user and create user for ansible
+useradd -d /home/kimbicodes -m kimbicodes   #username
+passwd kimbicodes123                        #pasword
+passwd -x -1 kimbicodes123                  #none expiry pasword
+su - kimbicodes                             #change user to newly created user
+
+yum update
+yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+yum install ansible
+ansible --version
+
+cd /etc/       #go here to see ansible directory
+cd /etc/ansible/
+ls  #open hosts file
+update hosts file with remote servers
+
+eg:
+Group name ---->>   [webserver]
+remot servers-->>   198.3.2.88
+
+
+Group name ---->>   [dbserver]
+remot servers-->>   198.3.2.88
+SAVE 
+
+
+MOVE TO HOST MACHINE  (do this for all hosts machines)
+sudo apt update                             #update package index
+sudo su                                     #change to super user and create user for ansible
+useradd -d /home/webserver -m webserver     #username
+passwd webserver                            #pasword
+passwd -x -1 webserver                      #none expiry pasword
+su - webserver                              #change user to newly created user
+
+GENERATE KEY IN CONTROL MACHINE
+mkdir .ssh                    #to make .ssh directory
+ls -al
+chmod 700 .ssh/               #update .ssh directory permisions
+cd .ssh                       #cd into .ssh directory
+ssh-keygen                    #to generate key pair
+ls -al                        #you shpuld see public and private key
+cat /root/.ssh/id_rsa.pub     #copy the content and past in authorized_keys IN remote
+nano authorized_keys          #past in this file
+ls -al                        #you should see authorized_keys file
+chmod 600 authorized_keys     #change permisions of the remote key
+
+GO TO ANSIBLE CONTROL MACHINE (work as the user you created earlier)
+su - kimbicodes                             #change user to earlier created user
+cd /etc/ansible                             #create a file for private key of remote server
+nano remotehost1.key                        #copy public key from remote and paste here
+chmod 600 remotehost1.key                   #change permisions of the remote key
+
+To test connection to remote host from control machine
+ssh -p22 -i /etc/ansible/remotehost1.key <remotehost username>@<remote host ip>
+ssh -p22 -i /etc/ansible/remotehost1.key webserver@ip address
+exit    #to exit host machine
+
+
+###update vi etc/ansible/host
+
+[webservers]
+54.164.166.210 ansible_ssh_user=<hostname of remote system> ansible_ssh_private_key_file=<key 
+file location in ansible host to connect the particular remote host>
+
+54.164.166.210 ansible_ssh_user=webserver ansible_ssh_private_key_file=/etc/ansible/remotehost1.key
+
+To connect using password of host use the command bellow
+54.164.166.210 ansible_user=<remote host user name> ansible_password=<remote host password>
+54.164.166.210 ansible_user=webserver ansible_password=webserver
+
+To connect using both key and pasword use the below command
+54.160.76.21 ansible_ssh_user=webserver ansible_ssh_private_key_file=/etc/ansible/remotehost1.key ansible_sudo_pass=webserver
+
+
+PING REMOTE HOSTS BY GROUP NAME
+
+ansible webservers -m ping
+ansible dbservers -m ping
+ansible all -m ping ### will ping all hosts from /etc/ansible/hosts file

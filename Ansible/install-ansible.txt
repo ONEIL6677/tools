@@ -1,0 +1,47 @@
+HOW TO INSTALL ANSIBLE
+
+#!/bin/bash 
+sudo apt update
+sudo apt install software-properties-common
+sudo apt-add-repository ppa:ansible/ansible
+sudo apt update
+sudo apt install ansible
+
+
+CREATE SSH CONNECTION
+
+ssh-keygen
+sudo nano /etc/ansible/hosts      #create host inventory file put d text bellow inside
+[test-servers]   #server name
+knode            #node name
+
+ssh-copy-id -i 'knode' = "node-name"
+
+ansible -m ping 'test-server' = "servername" to see if server is running
+
+CREATING PLAYBOOKS
+
+playbook to install nginx webserver
+
+sudo nano demo.yml
+---
+- name: install nginx
+  hosts : webserver
+  become_user: root
+  become: yes
+
+  tasks:
+  - name: install nginx
+    apt:
+       name: nginx
+       state: latest
+
+  - name: start nginx
+    service:
+       name: nginx
+       state: started
+
+ansible-playbook demo.yml  # to run the playbook
+
+
+

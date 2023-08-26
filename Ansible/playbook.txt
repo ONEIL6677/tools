@@ -1,0 +1,37 @@
+HOSTING A PHP APP WITH ANSIBLE      Github https://github.com/e2eSolutionArchitect/scripts/tree/main/ansible
+
+Prerequisites:
+            Create two machines{control machine and host machine}
+            Install ansible in control machine
+            Connect controle machine to host machine
+
+CONNECTING CONTROL MACHINE TO HOST MACHINE
+ssh-keygen      #generate the key
+sudo nano /etc/ansible/hosts      #create host inventory file put d text bellow inside
+[test-servers]   #server name
+knode            #node name
+
+ssh-copy-id -i 'knode' = "node-name or ip"
+
+ansible -m ping 'test-server' = "servername" to see if server is running
+
+
+name: install apapche & php & Mysql
+hosts: test-serversbecome: true
+become_user: root 
+gather_facts: true
+tasks:
+ - name: "install apache2"
+ - package: name=apache2 state=present
+ - name: "install apache2-php5"
+ - package: name=libapache2-mod-php state=present
+ - name: "install php-cli"
+ - package: name=php-cli state=present
+ - name: "install php-mcrypt"
+ - package: name=php-mcrypt state=present
+ - name: "install php-gd"
+ - package: name=php-gd state=present
+ - name: "install php-mysql"
+ - package: name=php-mysql state=present
+ - name: "install mysql-server"
+ - package: name=mysql-server state=present

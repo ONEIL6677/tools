@@ -1,0 +1,109 @@
+DEPLOYING A DOCKERISED JAVA APP TO ec2 WITH TOMCAT8
+
+
+stage1: Go to pipline syntax under steps select git past repository url
+
+node{
+   stage('SCM Checkout'){
+       git credentialsId: 'git-creds', url: 'https://github.com/javahometech/my-app' branch: 'main'
+   }
+}
+BUILD NOW
+
+stage2: go to manage jenkins/tools
+Go to pipline syntax under steps select "tools: use tools from predefined installations"
+type of tool is maven it will generate -> tool name: 'maven-3', type: 'maven'
+
+
+node{
+   stage('SCM Checkout'){
+       git credentialsId: 'git-creds', url: 'https://github.com/javahometech/my-app' branch: 'main'
+   }
+   stage('Mvn Package'){
+     def mvnHome = tool name: 'maven-3', type: 'maven'
+     def mvnCMD = "${mvnHome}/bin/mvn"
+     sh "${mvnCMD} clean package"
+   }
+}
+BUILD NOW
+
+
+stage3:
+
+node{
+   stage('SCM Checkout'){
+       git credentialsId: 'git-creds', url: 'https://github.com/javahometech/my-app' branch: 'main'
+   }
+   stage('Mvn Package'){
+     def mvnHome = tool name: 'maven-3', type: 'maven' # mvnhom fuction with credentials
+     def mvnCMD = "${mvnHome}/bin/mvn"  #full path of mvn
+     sh "${mvnCMD} clean package"
+   }
+   stage('Build Docker Image'){
+     sh 'docker build -t kammana/my-app:2.0.0 .'
+                         username/imagename:tage '.' Dockerfile location
+   }
+}
+
+
+
+stahe4: Go to pipline syntax under steps select "with credential"/bindings/add/sevret text/
+variable name
+
+node{
+   stage('SCM Checkout'){
+       git credentialsId: 'git-creds', url: 'https://github.com/javahometech/my-app' branch: 'main'
+   }
+   stage('Mvn Package'){
+     def mvnHome = tool name: 'maven-3', type: 'maven' # mvnhom fuction with credentials
+     def mvnCMD = "${mvnHome}/bin/mvn"  #full path of mvn
+     sh "${mvnCMD} clean package"
+   }
+   stage('Build Docker Image'){
+     sh 'docker build -t kammana/my-app:2.0.0 .'
+                         username/imagename:tage '.' Dockerfile location
+   }
+   stage('Push Docker Image'){
+     withCredentials([string(credentialsId: 'docker-pwd', variable: 'dockerHubPwd')]) {
+        sh "docker login -u kammana -p ${dockerHubPwd}"
+     }
+     sh 'docker push kammana/my-app:2.0.0'
+   }
+}
+BUILD NOW
+
+
+                               FINAL STAGE
+
+
+stage5:  Go to pipline syntax under steps select "sshAgent/add jenkins/username with privkey
+put username
+copy .pem file and past under secret key
+
+node{
+   stage('SCM Checkout'){
+       git credentialsId: 'git-creds', url: 'https://github.com/javahometech/my-app' branch: 'main'
+   }
+   stage('Mvn Package'){
+     def mvnHome = tool name: 'maven-3', type: 'maven' # mvnhom fuction with credentials
+     def mvnCMD = "${mvnHome}/bin/mvn"  #full path of mvn
+     sh "${mvnCMD} clean package"
+   }
+   stage('Build Docker Image'){
+     sh 'docker build -t kammana/my-app:2.0.0 .'
+                         username/imagename:tage '.' Dockerfile location
+   }
+   stage('Push Docker Image'){
+     withCredentials([string(credentialsId: 'docker-pwd', variable: 'dockerHubPwd')]) {
+        sh "docker login -u kammana -p ${dockerHubPwd}"
+     }
+     sh 'docker push kammana/my-app:2.0.0'
+   }
+
+   stage('Run Container on Dev Server'){
+     def dockerRun = 'docker run -p 8080:8080 -d --name my-app kammana/my-app:2.0.0'
+     sshagent(['dev-server']) {
+       sh "ssh -o StrictHostKeyChecking=no ec2-user@publicIP ${dockerRun}"
+     }
+   }
+}

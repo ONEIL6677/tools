@@ -1,0 +1,89 @@
+ANSIBLE CONNECTION ON EC2 MACHINE
+
+sudo hostnamectl set-hostname master #change host name
+sudo -i
+
+sudo apt update
+sudo su #change to super user and create user for ansible
+useradd -d /home/kimbicodes -m kimbicodes #username
+passwd kimbicodes #click enter to add pasword
+nano /etc/sudoers  #add user to sudo file as seen below
+under root
+kimbicodes ALL=(ALL) NOPASSWD:ALL
+
+allow people in group wheel
+kimbicodes ALL=(ALL) NOPASSWD:ALL
+SAVE
+
+nano /etc/ssh/sshd_config #go here and make changes
+paswordauthentication yes #make it yes
+permitrootlogin yes #uncomment thhis line
+systemctl restart sshd #restart sshd
+
+
+
+step1: INSTALL ANSIBLE ON CONTROL MACHINE
+sudo hostnamectl set-hostname master #change host name
+sudo -i
+
+#!/bin/bash 
+sudo apt update
+sudo apt install software-properties-common
+sudo apt-add-repository ppa:ansible/ansible
+sudo apt update
+sudo apt install ansible -y
+
+FOR AMAZON LINUX
+amazon-linux-extras install ansible2
+
+step2: INSTALL PYTHON ON SLAVE MACHINE
+#!/bin/bash 
+sudo apt update
+sudo apt install python -y
+cd .ssh #you should see authorized_keys file in slave
+nano .ssh #past public key copied from host machine
+
+step3: CONFIGURE SSH ACCESS IN ANSIBLE HOST MACHINE
+cd .ssh   #in host machine go to .ssh directory
+ls #you should see authorized_keys known_hosts
+ssh-keygen #to generate a key for host machine
+ll /root/.ssh #authorized_keys id_rsa id_rsa.pub known_hosts
+cat /root/.ssh/id_rsa.pub #copy the content and past in authorized keys in slave machine
+ssh slavemachinename@ipadress #to connect to slave
+ssh ubuntu@ipAddress
+exit #to exit slave machine and go back to host or master machine
+
+step4: SETTING UP ANSIBLE HOST AND TESTING CONNECTION
+nano /etc/ansible/hosts #add groups of ip addresses in this file
+[group_name] #name of the group u want to put ur slaves
+slavename ansible_ssh_host=ipAdress 
+
+[webserver]
+54.86.222.148 ansible_ssh_user=ubuntu ansible$private_key_file=/root/.ssh/id_rsa.pub
+44.202.251.68 ansible_ssh_user=ubuntu ansible$private_key_file=/root/.ssh/id_rsa.pub
+3.85.231.80 ansible_ssh_user=ubuntu ansible$private_key_file=/root/.ssh/id_rsa.pub
+
+ansible -m ping all
+ansible -m ping webserver
+
+
+PLAYBOOK TO INSTALL NGINX
+
+sudo nano demo.yml
+---
+- name: install nginx
+  hosts : webserver
+  become_user: root
+  become: yes
+
+  tasks:
+  - name: install nginx
+    apt:
+       name: nginx
+       state: latest
+
+  - name: start nginx
+    service:
+       name: nginx
+       state: started
+

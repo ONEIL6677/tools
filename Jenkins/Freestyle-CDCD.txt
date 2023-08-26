@@ -1,0 +1,74 @@
+BUILDING FREESTYLE JENKINS PIPLINE INFRASTRUCTURE
+
+CONFIGURE DEV SERVER
+1. Open/create a file with vi editor
+vi jenks.sh
+2. Copy the commands below and past in jenks.sh file and save
+#!/bin/bash
+sudo apt update
+sudo apt install openjdk-11-jdk -y
+sudo apt install -y git maven
+wget https://get.jenkins.io/war-stable/2.401.2/jenkins.war
+java -jar jenkins.war
+3. run jenks.sh file to install jenkins with the command bellow
+sh jenks.sh
+
+
+CONFIGURE QA SERVER
+1. Open/create a file with vi editor
+vi tomcat.sh
+2. Paste the following code inside
+#!/bin/bash
+sudo apt update
+sudo apt install tomcat9 -y
+sudo apt install tomcat9-admin -y
+3. Run tomcat.sh file to install tomcat with the command bellow
+sh tomcat.sh
+4. To create tomcat web server user go to cd /etc/tomcate9/
+5. Open users file vi tomcat-users.xml press insert to add user
+6. Create user and password in tomcat-users.xml file (:wq! = save quit) (:qa! = Quit)
+<user username="admin" password="admin" roles="manager-script, 
+manager-status, manger-gui"/>
+7. Restart tomcat to save our user
+sudo service tomcat9 restart
+8. To access tomcat copy ec2 instance ip and add port 8080 = ip:8080/
+9. Do the same thing in the 3rd machine (prod server)
+ 
+
+JENKINS FREESTYLE PROJECT
+Continuous download (download build pipeline and deploy to container plugins)
+1. Creat a freestyle job web-app
+2. Go to source code management -> git -> branch sp: main = apply $ save(build/run)
+Continuous build (create war file) Practice repo: https://github.com/ONEIL6677/Devops.git
+1. Go to configure same job build steps -> add build steps -> invoke top maven targets
+2. Under goals write package =apply $ save (build triggers)
+Continuous Deployment (Deploy To QA Server)
+1. Go 1
+st job configure post build action->post b actions->deploy WAR.EAR to container
+2. Under war.ear: **/*.war -> context path: web-app-> containers: tomcat9
+3. Add credentials used in tomcat9 add->username->password ->add
+4. Select ncreated credentials -> tomcat url: https://ip:8080 = apply $ save (build/run)
+5. To acess the QA server https://ip:8080/web-app = context path
+Continuous testing (practice repo: https://github.com/ONEIL6677/test-scripts.git)
+1. Create another job and call it tests
+a. Testing team will give you a shell script for testing 
+2. Go to source code management -> git -> branch sp: main = apply $ save(build/run)
+3. Go to 2
+nd
+job Build steps->add build steps->execute shell
+4. Echo “testing passed” apply $ save
+5. Go to first job configure->post build action->add post build action->archive the artifact
+6. To make sure you are testing the artifact in first job
+7. Go up and archive the artifact: **/*.war= apply $ save
+8. Copy the artifact to second job. Go to first job and call second(test) job
+9. Go to first job. Configure->post build actions-> add p b actions-> build other projects
+10. Scroll up projects to build: tests apply $ save 
+Continuous delivery
+1. Go to second job copy artifact from first job
+2. build steps->add build steps->copy artifact->scroll down project: name:web-app (save)
+3. Go to 2nd job. post build actions-> add p b actions-> deploy WAR.EAR to container
+4. Under war.ear: **/*.war -> context path: main-app-> containers: tomcat9
+5. Add credentials used in tomcat9 add->username->password ->add
+6. Select ncreated credentials -> tomcat url: https://ip:8080 = apply $ save (build/run)
+7. To acess the QA server https://ip:8080/main-app = context path
+5b7021262c0f4812a6008212512b5b49

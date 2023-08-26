@@ -1,0 +1,11 @@
+#!bin/bash
+sudo apt update
+sudo apt install docker
+sudo usermod -a -G docker ubuntu
+id ubuntu
+newgrp docker
+sudo apt install python3-pip
+sudo pip3 install docker-compose
+sudo systemctl enable docker.service
+sudo systemctl start docker.service
+sudo systemctl status docker.service
